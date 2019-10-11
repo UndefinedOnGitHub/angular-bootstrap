@@ -4962,7 +4962,7 @@ angular.module('ui.bootstrap.tooltip', ['ui.bootstrap.position', 'ui.bootstrap.s
    * Returns the actual instance of the $tooltip service.
    * TODO support multiple triggers
    */
-  this.$get = ['$window', '$compile', '$timeout', '$document', '$uibPosition', '$interpolate', '$rootScope', '$parse', '$$stackedMap', function($window, $compile, $timeout, $document, $position, $interpolate, $rootScope, $parse, $$stackedMap) {
+  this.$get = ['$window', '$compile', '$timeout', '$document', '$uibPosition', '$interpolate', '$rootScope', '$parse', '$interval', '$$stackedMap', function($window, $compile, $timeout, $document, $position, $interpolate, $rootScope, $parse, $interval, $$stackedMap) {
     var openedTooltips = $$stackedMap.createNew();
     $document.on('keyup', keypressListener);
 
@@ -5047,6 +5047,10 @@ angular.module('ui.bootstrap.tooltip', ['ui.bootstrap.position', 'ui.bootstrap.s
             var contentParse = options.useContentExp ? $parse(attrs[ttType]) : false;
             var observers = [];
             var lastPlacement;
+
+            // 10/11/2019
+            var useTooltipInterval = angular.isDefined(attrs[prefix + 'DelayOnHover']);
+            var tooltipInterval;
 
             var positionTooltip = function() {
               // check if tooltip exists and is not empty
@@ -5212,6 +5216,22 @@ angular.module('ui.bootstrap.tooltip', ['ui.bootstrap.position', 'ui.bootstrap.s
               }
             }
 
+            function setHideDelayInterval() {
+              if(!tooltipInterval) {
+                tooltipInterval = $interval(function() {
+                  if (hideTimeout) {
+                    $timeout.cancel(hideTimeout);
+                    hideTimeout = $timeout(hide, ttScope.popupCloseDelay, false);
+                  }
+                }, (ttScope.popupCloseDelay - 50));
+              }
+            }
+
+            function clearHideDelayInterval() {
+              $interval.cancel(tooltipInterval);
+              tooltipInterval = null;
+            }
+
             function createTooltip() {
               // There can only be one tooltip element per directive shown at once.
               if (tooltip) {
@@ -5232,6 +5252,11 @@ angular.module('ui.bootstrap.tooltip', ['ui.bootstrap.position', 'ui.bootstrap.s
               });
 
               prepObservers();
+
+              if (useTooltipInterval) {
+                tooltip.context.onmouseover = setHideDelayInterval;
+                tooltip.context.onmouseleave = clearHideDelayInterval;
+              }
             }
 
             function removeTooltip() {
