@@ -5254,8 +5254,8 @@ angular.module('ui.bootstrap.tooltip', ['ui.bootstrap.position', 'ui.bootstrap.s
               prepObservers();
 
               if (useTooltipInterval) {
-                tooltip.context.onmouseover = setHideDelayInterval;
-                tooltip.context.onmouseleave = clearHideDelayInterval;
+                tooltip[0].onmouseover = setHideDelayInterval;
+                tooltip[0].onmouseleave = clearHideDelayInterval;
               }
             }
 
